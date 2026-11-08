@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>تحدي العلوم - فرقعة البالونات (مجالات القوى)</title>
+    <!-- مكتبة التقاط الشاشة للمشاركة -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #eaf1f8;
+            --card-bg: #ffffff;
+            --text-color: #0b3954;
+            --accent-green: #08803e;
+            --accent-orange: #d65a00;
+            --accent-blue: #0b63b6;
+            --balloon-green: #0a8f44;
+            --balloon-orange: #df5800;
+            --border-color: #d1d9e6;
+        }
+
+        body.dark-mode {
+            --bg-color: #121820;
+            --card-bg: #1c2430;
+            --text-color: #e6edf3;
+            --accent-green: #15934e;
+            --accent-orange: #e06d1e;
+            --accent-blue: #388bfd;
+            --balloon-green: #118140;
+            --balloon-orange: #c75204;
+            --border-color: #2c394b;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 8px;
+            transition: background-color 0.3s ease;
+        }
+
+        #game-wrapper {
+            width: 100%;
+            max-width: 440px;
+            height: 96vh;
+            max-height: 860px;
+            background: var(--bg-color);
+            border: 2px solid var(--border-color);
+            border-radius: 26px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.18);
+            position: relative;
+        }
+
+        /* شاشات الحوار والمودال */
+        .modal-screen {
+            position: absolute;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(6px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            padding: 16px;
+        }
+
+        .modal-card {
+            background: var(--card-bg);
+            color: var(--text-color);
+            padding: 22px 18px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 360px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            max-height: 92vh;
+            overflow-y: auto;
+        }
+
+        .modal-card h2 { margin-bottom: 12px; font-size: 20px; }
+        .modal-card input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+            margin-bottom: 14px;
+            font-size: 15px;
+            text-align: center;
+            outline: none;
+            background: var(--card-bg);
+            color: var(--text-color);
+        }
+
+        /* اختيار المستوى */
+        .level-select-container {
+            margin-bottom: 14px;
+            text-align: right;
+        }
+        .level-select-label {
+            font-size: 13px;
+            font-weight: bold;
+            margin-bottom: 6px;
+            display: block;
+        }
+        .level-btn-group {
+            display: flex;
+            gap: 6px;
+        }
+        .level-btn {
+            flex: 1;
+            padding: 8px 4px;
+            border-radius: 10px;
+            border: 1.5px solid var(--border-color);
+            background: var(--card-bg);
+            color: var(--text-color);
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .level-btn.active {
+            background: var(--accent-blue);
+            color: white;
+            border-color: var(--accent-blue);
+        }
+
+        .btn-action {
+            background: var(--accent-green);
+            color: white;
+            border: none;
+            padding: 11px 18px;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 6px;
+            transition: transform 0.1s;
+        }
+        .btn-action:active { transform: scale(0.97); }
+        .btn-secondary { background: var(--accent-blue); }
+
+        /* شاشة الانتظار */
+        .waiting-box {
+            background: linear-gradient(135deg, rgba(8,128,62,0.1), rgba(11,99,182,0.1));
+            border: 1.5px solid var(--accent-green);
+            border-radius: 16px;
+            padding: 16px;
+            margin: 15px 0;
+            text-align: center;
+        }
+        .advice-badge {
+            background: var(--accent-green);
+            color: white;
+            font-size: 11px;
+            padding: 2px 10px;
+            border-radius: 12px;
+            display: inline-block;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        .advice-text {
+            font-size: 14px;
+            line-height: 1.6;
+            font-weight: bold;
+            color: var(--text-color);
+        }
+        .loading-dots span {
+            display: inline-block;
+            font-size: 24px;
+            animation: blink 1.4s infinite both;
+            color: var(--accent-green);
+        }
+        .loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+        .loading-dots span:nth-child(4) { animation-delay: 0.6s; }
+
+        @keyframes blink {
+            0%, 80%, 100% { opacity: 0; }
+            40% { opacity: 1; }
+        }
+
+        /* اللوحة العلوية */
+        .top-row-bar {
+            display: flex;
+            gap: 5px;
+            padding: 10px 12px 6px 12px;
+            align-items: center;
+        }
+        .speed-btn {
+            flex: 1;
+            padding: 6px 2px;
+            background: var(--card-bg);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            text-align: center;
+        }
+        .speed-btn.active {
+            background: var(--accent-green);
+            color: #fff;
+            border-color: var(--accent-green);
+        }
+        .theme-toggle {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        /* شريط المستوى أثناء اللعب */
+        .level-bar-live {
+            display: flex;
+            gap: 6px;
+            padding: 2px 12px;
+        }
+        .level-tag-btn {
+            flex: 1;
+            padding: 4px;
+            background: rgba(0,0,0,0.04);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            color: var(--text-color);
+            text-align: center;
+        }
+        .level-tag-btn.active {
+            background: var(--accent-blue);
+            color: white;
+            border-color: var(--accent-blue);
+        }
+
+        /* شريط الحالة */
+        .status-row-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 12px 8px 12px;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .badge-box {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .btn-skip {
+            background: var(--accent-orange);
+            color: white;
+            border: none;
+            border-radius: 14px;
+            padding: 4px 12px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        /* صندوق السؤال */
+        .question-container {
+            margin: 0 12px;
+            background: var(--card-bg);
+            border: 1.5px solid #bdd2e6;
+            border-radius: 16px;
+            padding: 16px 12px;
+            position: relative;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+            min-height: 95px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .question-indicator {
+            position: absolute;
+            top: -10px;
+            right: 18px;
+            background: var(--accent-green);
+            color: white;
+            padding: 2px 10px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        .question-text {
+            font-size: 14px;
+            font-weight: 800;
+            text-align: center;
+            line-height: 1.45;
+            color: var(--text-color);
+        }
+
+        /* منطقة طيران البالونات */
+        .game-play-area {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            border-top: 1px dashed #b9cbe0;
+            margin-top: 8px;
+        }
+        .balloon {
+            position: absolute;
+            width: 86px;
+            height: 115px;
+            border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            font-size: 11.5px;
+            line-height: 1.25;
+            padding: 10px 6px 16px 6px;
+            cursor: pointer;
+            box-shadow: inset -5px -5px 10px rgba(0,0,0,0.25), inset 5px 5px 10px rgba(255,255,255,0.3), 0 6px 14px rgba(0,0,0,0.15);
+            transition: transform 0.15s;
+            word-break: break-word;
+            overflow: hidden;
+            z-index: 10;
+        }
+        .balloon.text-long {
+            font-size: 9.5px;
+            line-height: 1.15;
+            padding: 8px 4px 14px 4px;
+        }
+        .balloon::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            width: 8px;
+            height: 5px;
+            background: inherit;
+            clip-path: polygon(50% 100%, 0 0, 100% 0);
+        }
+        .balloon::before {
+            content: '';
+            position: absolute;
+            bottom: -18px;
+            width: 2px;
+            height: 13px;
+            background: rgba(120, 140, 160, 0.6);
+        }
+        .balloon-pop {
+            transform: scale(1.35) !important;
+            opacity: 0 !important;
+            transition: transform 0.18s ease-out, opacity 0.18s ease-out !important;
+        }
+
+        /* بالونة الإجابة الصحيحة المتوهجة في المنتصف */
+        .center-glowing-balloon {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(1.25);
+            width: 130px;
+            height: 155px;
+            border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+            padding: 10px;
+            background: #08803e;
+            box-shadow: 0 0 25px 10px #25d366, inset -5px -5px 10px rgba(0,0,0,0.3), inset 5px 5px 10px rgba(255,255,255,0.4);
+            z-index: 80;
+            animation: pulseGlow 0.8s infinite alternate ease-in-out;
+            pointer-events: none;
+            word-break: break-word;
+        }
+        .center-glowing-balloon::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            width: 10px;
+            height: 8px;
+            background: inherit;
+            clip-path: polygon(50% 100%, 0 0, 100% 0);
+        }
+        .center-glowing-balloon-label {
+            font-size: 10px;
+            background: rgba(0,0,0,0.4);
+            padding: 2px 6px;
+            border-radius: 8px;
+            margin-bottom: 4px;
+        }
+
+        @keyframes pulseGlow {
+            from {
+                transform: translate(-50%, -50%) scale(1.2);
+                box-shadow: 0 0 20px 6px #25d366, inset -5px -5px 10px rgba(0,0,0,0.3);
+            }
+            to {
+                transform: translate(-50%, -50%) scale(1.35);
+                box-shadow: 0 0 35px 14px #25d366, inset -5px -5px 10px rgba(0,0,0,0.2);
+            }
+        }
+
+        /* صندوق مراجعة الأخطاء مع الشرح البسيط */
+        .mistakes-review-box {
+            text-align: right;
+            margin: 12px 0;
+            background: rgba(0,0,0,0.03);
+            border-radius: 14px;
+            padding: 10px;
+            max-height: 180px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+        }
+        .mistakes-header {
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--accent-orange);
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .mistake-item {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 8px;
+            margin-bottom: 8px;
+            border-right: 3px solid #df5800;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.04);
+            font-size: 12px;
+            line-height: 1.5;
+        }
+        .mistake-q {
+            font-weight: bold;
+            color: var(--text-color);
+            margin-bottom: 3px;
+        }
+        .mistake-ans {
+            color: var(--accent-green);
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+        .mistake-exp {
+            color: #555;
+            font-size: 11px;
+            background: rgba(0,0,0,0.03);
+            padding: 4px;
+            border-radius: 6px;
+        }
+        body.dark-mode .mistake-exp { color: #bbb; }
+
+        /* شريط المصمم */
+        .designer-bar {
+            background: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+            padding: 8px;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 800;
+            color: #0b3954;
+        }
+        body.dark-mode .designer-bar { color: #58a6ff; }
+
+        /* أزرار المشاركة */
+        .social-share-group {
+            display: flex;
+            gap: 6px;
+            margin: 10px 0;
+        }
+        .btn-social {
+            flex: 1;
+            padding: 8px 3px;
+            border-radius: 10px;
+            border: none;
+            color: #fff;
+            font-size: 11px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .btn-wa { background: #25D366; }
+        .btn-fb { background: #1877F2; }
+        .btn-shot { background: #6f42c1; }
+    </style>
+</head>
+<body>
+
+<div id="game-wrapper">
+    <!-- شاشة البداية -->
+    <div id="start-modal" class="modal-screen">
+        <div class="modal-card">
+            <h2>🎈 تحدي مجالات القوى</h2>
+            <p style="margin-bottom: 12px; font-size: 13px;">اكتب اسمك واختر المستوى التعليمي:</p>
+            <input type="text" id="player-name-input" placeholder="اكتب اسمك هنا..." autocomplete="off">
+            
+            <div class="level-select-container">
+                <span class="level-select-label">اختر مستوى التحدي:</span>
+                <div class="level-btn-group">
+                    <button class="level-btn active" id="btn-lvl-1" onclick="selectLevel(1)">م1: كهربية</button>
+                    <button class="level-btn" id="btn-lvl-2" onclick="selectLevel(2)">م2: مغناطيسية</button>
+                    <button class="level-btn" id="btn-lvl-3" onclick="selectLevel(3)">م3: جاذبية</button>
+                </div>
+            </div>
+
+            <button class="btn-action" onclick="initiateGameFlow()">دخول التحدي 🚀</button>
+        </div>
+    </div>
+
+    <!-- شاشة الانتظار -->
+    <div id="wait-modal" class="modal-screen" style="display: none;">
+        <div class="modal-card">
+            <h3 style="font-size: 17px; margin-bottom: 6px;">جاري إعداد الأسئلة</h3>
+            <div class="loading-dots">
+                جاري بدء اللعبة
+                <span>.</span><span>.</span><span>.</span><span>.</span>
+            </div>
+            
+            <div class="waiting-box">
+                <span class="advice-badge">💡 نصيحة وقيمة اليوم</span>
+                <p class="advice-text" id="moral-advice">"طلب العلم عبادة، والصدق والأمانة هما زكاة العلم وبركته."</p>
+            </div>
+            <p style="font-size: 12px; opacity: 0.8;">استعن بالله وركز جيداً...</p>
+        </div>
+    </div>
+
+    <!-- شاشة نهاية المستوى ومراجعة الأخطاء -->
+    <div id="end-modal" class="modal-screen" style="display: none;">
+        <div class="modal-card" id="end-card-content">
+            <h2 id="end-title">انتهى التحدي! 🎉</h2>
+            <p id="motivational-phrase" style="font-size: 14px; color: var(--accent-orange); font-weight: bold; margin: 6px 0;"></p>
+            
+            <div style="background: rgba(0,0,0,0.05); padding: 8px; border-radius: 12px; margin-bottom: 8px;">
+                <p style="font-size: 13px;">البطل: <span id="final-player-name" style="font-weight: bold;"></span></p>
+                <p style="font-size: 15px; margin-top: 2px;">المستوى: <span id="final-level-name" style="font-weight: bold; color: var(--accent-blue);"></span></p>
+                <p style="font-size: 16px; margin-top: 2px;">النتيجة: <span id="final-score" style="color: var(--accent-green); font-weight: bold;">0</span> / 80</p>
+                <p style="font-size: 13px; margin-top: 3px; color: #d65a00;">🏆 أفضل نتيجة مسجلة: <span id="final-high-score" style="font-weight: bold;">0</span> / 80</p>
+            </div>
+
+            <!-- قائمة مراجعة الأخطاء -->
+            <div id="mistakes-container" class="mistakes-review-box" style="display: none;">
+                <div class="mistakes-header">🔍 مراجعة الأخطاء وتفسير الإجابات:</div>
+                <div id="mistakes-list"></div>
+            </div>
+
+            <p style="font-size: 12px; margin-bottom: 6px;">مشاركة النتيجة والإنجاز:</p>
+            <div class="social-share-group">
+                <button class="btn-social btn-wa" onclick="shareWhatsApp()">واتساب</button>
+                <button class="btn-social btn-fb" onclick="shareFacebook()">فيسبوك</button>
+                <button class="btn-social btn-shot" onclick="takeScreenshotAndShare()">📸 لقطة شاشة</button>
+            </div>
+
+            <button class="btn-action" onclick="retryCurrentLevel()">إعادة المستوى الحالي 🔁</button>
+            <button class="btn-action btn-secondary" id="btn-next-level" onclick="goToNextLevel()">المستوى التالي ⏭️</button>
+        </div>
+    </div>
+
+    <!-- الشريط العلوي للإعدادات -->
+    <div class="top-row-bar">
+        <button class="theme-toggle" onclick="toggleTheme()" title="تغيير المظهر">🌓</button>
+        <button class="speed-btn active" id="spd-slow" onclick="setSpeed(28, 'spd-slow')">بطيء (16ث)</button>
+        <button class="speed-btn" id="spd-mid" onclick="setSpeed(50, 'spd-mid')">متوسط</button>
+        <button class="speed-btn" id="spd-fast" onclick="setSpeed(75, 'spd-fast')">سريع</button>
+    </div>
+
+    <!-- شريط التبديل المباشر بين المستويات -->
+    <div class="level-bar-live">
+        <button class="level-tag-btn active" id="live-lvl-1" onclick="switchLevelLive(1)">م1: كهربية</button>
+        <button class="level-tag-btn" id="live-lvl-2" onclick="switchLevelLive(2)">م2: مغناطيسية</button>
+        <button class="level-tag-btn" id="live-lvl-3" onclick="switchLevelLive(3)">م3: جاذبية</button>
+    </div>
+
+    <!-- شريط معلومات اللعبة والقلوب وأعلى نتيجة -->
+    <div class="status-row-bar">
+        <div class="badge-box" id="lives-display">❤️❤️❤️</div>
+        <div class="badge-box">👤 <span id="player-display">البطل</span></div>
+        <div class="badge-box">⭐ <span id="score-display">0</span></div>
+        <div class="badge-box" style="color: var(--accent-orange);">🏆 <span id="high-score-display">0</span></div>
+        <button class="btn-skip" id="btn-skip-q" onclick="skipQuestion()">تخطي (<span id="skips-display">3</span>)</button>
+    </div>
+
+    <!-- مربع السؤال -->
+    <div class="question-container">
+        <div class="question-indicator" id="q-counter">السؤال 1 / 8</div>
+        <div class="question-text" id="question-text">جاري تحضير التحدي...</div>
+    </div>
+
+    <!-- مساحة اللعبة وحركة البالونات -->
+    <div class="game-play-area" id="play-area"></div>
+
+    <!-- شريط المصمم -->
+    <div class="designer-bar">
+        مصمم اللعبة : أ/ عبد الرحمن عبد الله 📞 01021779644
+    </div>
+</div>
+
+<script>
+    // -------------------------------------------------------------
+    // بنك الـ 150 سؤالاً المنظف بالكامل من أي وسوم اقتباس مشوهة
+    // -------------------------------------------------------------
+    const questionBank = {
+        1: [ // الدرس الأول: القوى الكهربية (50 سؤالاً)
+            { q: "الكهربية الساكنة تُعرف علمياً باسم الكهربية:", options: ["الديناميكية", "الكهروستاتيكية", "الكهرومغناطيسية", "التيارية"], answer: 1, exp: "الكهربية الساكنة تعني الشحنات المستقرة على السطح وتعرف بالإلكتروستاتيكية." },
+            { q: "تستقر الشحنات الناتجة عن الدلك على الأجسام العازلة في:", options: ["كامل الجسم", "الجزء المدلوك فقط", "المركز فقط", "القاعدة"], answer: 1, exp: "في المواد العازلة تستقر الشحنات على الجزء المدلوك فقط ولا تسري في باقي الجسم." },
+            { q: "تتولد الكهربية الساكنة عند احتكاك مادتين بطريقة تسمى:", options: ["الشحن بالدلك", "التحليل الكهربي", "التوصيل الأرضي", "التسخين"], answer: 0, exp: "احتكاك مادتين مناسبتين يؤدي إلى انتقال إلكترونات بطريقة الشحن بالدلك." },
+            { q: "عند دلك ساق من الأبونيت بقطعة صوف، يكتسب الأبونيت شحنة:", options: ["موجبة", "سالبة", "متعادلة", "مترددة"], answer: 1, exp: "الأبونيت يلي الصوف في السلسلة الكهروستاتيكية فيكتسب إلكترونات ويشحن بشحنة سالبة." },
+            { q: "عند دلك ساق من الزجاج بقطعة من الحرير تكتسب ساق الزجاج شحنة:", options: ["موجبة", "سالبة", "متعادلة", "منعدمة"], answer: 0, exp: "الزجاج يفقد إلكترونات بسهولة لصالح الحرير فيصبح مشحوناً بشحنة موجبة." },
+            { q: "الجسيمات المسؤولة عن انتقال الشحنات الكهربية الساكنة هي:", options: ["البروتونات", "النيوترونات", "الإلكترونات", "النواة"], answer: 2, exp: "الإلكترونات سالبة الشحنة وتتحرك من سطح مادة لأخرى أثناء الاحتكاك." },
+            { q: "الجسم الذي يفقد إلكترونات أثناء الدلك يصبح مشحوناً بشحنة:", options: ["موجبة", "سالبة", "متعادلة", "صفرية"], answer: 0, exp: "فقد الإلكترونات السالبة يجعل عدد الشحنات الموجبة أكبر فيصبح الجسم موجباً." },
+            { q: "الجسم الذي يكتسب إلكترونات أثناء الدلك يصبح مشحوناً بشحنة:", options: ["سالبة", "موجبة", "متعادلة", "قطبية"], answer: 0, exp: "اكتساب إلكترونات سالبة إضافية يجعل الشحنة الكلية للجسم سالبة." },
+            { q: "مقدار شحنة الجسم الدالك يكون دائماً ............. شحنة المدلوك:", options: ["أكبر من", "مساوياً لـ", "أقل من", "ضعف"], answer: 1, exp: "عدد الإلكترونات المفقودة من أحدهما يساوي تماماً عدد الإلكترونات المكتسبة في الآخر." },
+            { q: "نوع شحنة الدالكة بالنسبة لنوع شحنة المدلوك تكون:", options: ["متماثلة", "مخالفة (معاكسة)", "سالبة دائماً", "موجبة دائماً"], answer: 1, exp: "أحدهما يفقد فيشحن بشحنة موجبة والآخر يكتسب فيشحن بشحنة سالبة." },
+            { q: "تقاس الشحنات الكهربية في النظام الدولي بوحدة:", options: ["الأمبير", "الفولت", "الكولوم", "الأوم"], answer: 2, exp: "تقديراً للعالم الفرنسي شارل كولوم سميت وحدة الشحنة باسم الكولوم." },
+            { q: "يقاس مقدار الشحنات الكهربية الضعيفة بدقة باستخدام جهاز:", options: ["الأميتر", "الفولتميتر", "الكولوم ميتر", "الأوميتر"], answer: 2, exp: "الكولوم ميتر هو الجهاز المخصص لقياس كمية الشحنات الضعيفة." },
+            { q: "العالم الذي وضع قانون التربيع العكسي في الكهربية الساكنة هو:", options: ["إسحاق نيوتن", "شارل كولوم", "مايكل فاراداي", "أينشتاين"], answer: 1, exp: "العالم الفرنسي شارل كولوم هو واضع قانون كولوم للقوى الكهربية." },
+            { q: "ترتيب المواد تبعاً لسهولة فقدها للإلكترونات بالدلك يسمى:", options: ["النشاط الكيميائي", "السلسلة الكهروستاتيكية", "السلسلة المغناطيسية", "جدول مندليف"], answer: 1, exp: "السلسلة الكهروستاتيكية ترتب المواد بحسب سهولة فقدها للإلكترونات." },
+            { q: "المادة التي تسبق غيرها في السلسلة الكهروستاتيكية تُشحن بشحنة:", options: ["سالبة", "موجبة", "متعادلة", "مغناطيسية"], answer: 1, exp: "المادة المتقدمة تفقد إلكترونات بسهولة فتكتسب شحنة موجبة." },
+            { q: "المادة التي تلي غيرها في السلسلة الكهروستاتيكية تُشحن بشحنة:", options: ["سالبة", "موجبة", "متعادلة", "مزدوجة"], answer: 0, exp: "المادة المتأخرة في الترتيب تكتسب الإلكترونات فتصبح شحنتها سالبة." },
+            { q: "أي المواد الآتية تكتسب شحنة سالبة بسهولة عند دلكها بالصوف؟", options: ["الزجاج", "الشعر", "الأبونيت", "الخشب"], answer: 2, exp: "الأبونيت يقع في نهاية السلسلة الكهروستاتيكية فيكتسب الإلكترونات بسهولة." },
+            { q: "عند دلك قطعة صوف بقطعة حرير، تكتسب قطعة الصوف شحنة:", options: ["سالبة", "موجبة", "متعادلة", "مترددة"], answer: 1, exp: "الصوف يسبق الحرير في السلسلة فيفقد إلكترونات ويشحن بشحنة موجبة." },
+            { q: "تصنف المواد من حيث سريان الشحنات إلى مواد موصلة ومواد:", options: ["صلبة", "عازلة", "شفافة", "مرنة"], answer: 1, exp: "المواد إما موصلة تسمح بسريان الشحنات أو عازلة لا تسمح بسريانها." },
+            { q: "جميع المواد الآتية عازلة للكهرباء ما عدا:", options: ["الحديد", "الأبونيت", "الزجاج", "الخشب"], answer: 0, exp: "الحديد فلز وموصل جيد يسري فيه التيار والشحنات بسهولة." },
+            { q: "عند شحن ساق نحاسية بالدلك، يجب إمساكها بمقبض مصنوع من:", options: ["الحديد", "الفضة", "الخشب أو البلاستيك", "الألومنيوم"], answer: 2, exp: "الخشب مادة عازلة تمنع تسرب الشحنات من النحاس إلى جسم الإنسان." },
+            { q: "يوضع مقبض عازل لساق النحاس عند شحنها لمنع:", options: ["سخونتها", "تسرب الشحنات عبر اليد", "تآكل النحاس", "انكسارها"], answer: 1, exp: "جسم الإنسان موصل للشحنات، والمقبض العازل يمنع تفريغ الشحنة للأرض." },
+            { q: "سريان وتفريغ الشحنات الكهربية الساكنة يتم بسهولة خلال:", options: ["الزجاج", "الحرير", "جسم الإنسان والمعادن", "المطاط"], answer: 2, exp: "المعادن وجسم الإنسان من المواد الموصلة التي تفرغ الشحنات بسرعة." },
+            { q: "الشعور بلسعة كهربية عند لمس مقبض الباب بعد السير على موكيت سببه:", options: ["برودة المقبض", "تفريغ الشحنات الساكنة", "التيار المنزلي", "مغناطيسية المقبض"], answer: 1, exp: "الاحتكاك بالموكيت يولد شحنات ساكنة على الجسم تتفرغ فجأة عند لمس المقبض." },
+            { q: "تتدلى سلاسل معدنية من سيارات نقل الوقود بهدف:", options: ["تخفيف السرعة", "تفريغ الشحنات الساكنة بالأرض", "زيادة الوزن", "إصدار صوت"], answer: 1, exp: "تفريغ الشحنات الساكنة باستمرار في الأرض يمنع حدوث شرر واشتعال الوقود." },
+            { q: "تتولد الشحنات في خزانات الوقود بسبب احتكاك الوقود بـ:", options: ["الهواء الخارجي", "السطح الداخلي للخزان", "الإطارات", "المحرك"], answer: 1, exp: "حركة واحتكاك الوقود بالسطح الداخلي للخزان تولد كهرباء ساكنة." },
+            { q: "الجهاز المستخدم لحماية المباني من الصواعق الرعدية هو:", options: ["الكولوم ميتر", "مانعة الصواعق", "الإلكتروسكوب", "المحول"], answer: 1, exp: "مانعة الصواعق تسحب الشحنات وتفرغها بأمان إلى باطن الأرض." },
+            { q: "ينتهي الطرف السفلي لمانعة الصواعق بلوح معدني مدفون في:", options: ["خزان الماء", "باطن الأرض", "سطح المنزل", "الجدار"], answer: 1, exp: "دفن اللوح في باطن الأرض يضمن تسريب وتفريغ شحنة الصاعقة في التربة." },
+            { q: "القاعدة العامة: الشحنات المتشابهة تتنافر، والشحنات المختلفة:", options: ["تتلاشى", "تتجاذب", "تتعادل", "تتشتت"], answer: 1, exp: "القوى الكهربية تكون قوى تجاذب بين الشحنات المختلفة وتنافر بين المتشابهة." },
+            { q: "عند تقريب ساقي أبونيت مدلوكتين بالحرير من بعضهما، فإنهما:", options: ["تتجاذبان", "تتنافران", "لا تتأثران", "تلتصقان"], answer: 1, exp: "كلا الساقين يحملان نفس الشحنة السالبة، والشحنات المتشابهة تتنافر." },
+            { q: "عند تقريب ساق زجاج مدلوكة بحرير من ساق أبونيت مدلوكة بصوف:", options: ["تتجاذبان", "تتنافران", "تنكسران", "تتعادلان"], answer: 0, exp: "الزجاج موجب والأبونيت سالب، والشحنات المختلفة تتجاذب." },
+            { q: "تنشأ قوة تجاذب كهربي دائماً بين جسم مشحون وجسم آخر:", options: ["له نفس الشحنة", "غير مشحون (متعادل)", "موصل فقط", "مماثل تماماً"], answer: 1, exp: "الجسم المشحون يجذب الأجسام الخفيفة غير المشحونة مثل قصاصات الورق." },
+            { q: "عند مرور حزمة إلكترونات بين لوحين مشحونين فإنها تنحرف نحو:", options: ["اللوح السالب", "اللوح الموجب", "المنتصف دون انحراف", "الخارج"], answer: 1, exp: "الإلكترونات سالبة الشحنة فتنجذب نحو اللوح الموجب المخالف لها." },
+            { q: "النيوترونات عند مرورها داخل مجال كهربي بين لوحين فإنها:", options: ["تنحرف للموجب", "تنحرف للسالب", "تمر في خط مستقيم", "ترتد"], answer: 2, exp: "النيوترونات جسيمات متعادلة كهربياً لا تتأثر بالمجال الكهربي وتسير باستقامة." },
+            { q: "البروتونات عند مرورها في مجال كهربي بين لوحين تنحرف نحو:", options: ["اللوح السالب", "اللوح الموجب", "الأعلى فقط", "الأسفل فقط"], answer: 0, exp: "البروتونات موجبة الشحنة فتنجذب نحو اللوح السالب المخالف لها." },
+            { q: "تقنية الطلاء الكهروستاتيكي تعتمد أساساً على قوة:", options: ["التنافر الكهربي", "التجاذب بين شحنات مختلفة", "الجاذبية الأرضية", "الاحتكاك"], answer: 1, exp: "تعتمد على تجاذب رذاذ الطلاء المشحون مع المعدن المشحون بشحنة مخالفة." },
+            { q: "في الطلاء الكهروستاتيكي، يُشحن رذاذ الطلاء بشحنة موجبة والسيارة بشحنة:", options: ["موجبة", "سالبة", "متعادلة", "منعدمة"], answer: 1, exp: "اختلاف الشحنة يجعل رذاذ الطلاء ينجذب بقوة وينتظم على الهيكل المعدني." },
+            { q: "من أهم مميزات الطلاء الكهروستاتيكي أنه:", options: ["يزيد الفاقد", "يجعل طبقة الطلاء منتظمة وموفرة", "يبطئ الجفاف", "يحتاج لمواد سامة"], answer: 1, exp: "التجاذب الكهربي يوزع الطلاء بانتظام تام ويمنع إهدار مادة الرش." },
+            { q: "المنطقة المحيطة بالشحنة الكهربية وتظهر فيها آثار قوتها تسمى:", options: ["الجهد الكهربي", "المجال الكهربي", "التدفق الكهروستاتيكي", "المسار"], answer: 1, exp: "المجال الكهربي هو الحيز الذي تؤثر فيه القوة الكهربية للشحنة عن بعد." },
+            { q: "المسار الذي تتخذه شحنة موجبة صغيرة حرة الحركة في مجال كهربي هو:", options: ["خط المجال الكهربي", "المقاومة النوعية", "التيار المستمر", "فرق الجهد"], answer: 0, exp: "هذا هو التعريف العلمي الدقيق لخط المجال (خط القوة) الكهربي." },
+            { q: "تبدأ خطوط المجال الكهربي دائماً من وتخرج من:", options: ["الشحنة السالبة", "الشحنة الموجبة", "المركز نحو اللانهاية", "اللوح السالب"], answer: 1, exp: "خطوط القوى تخرج من الشحنات الموجبة وتدخل في الشحنات السالبة." },
+            { q: "تنتهي خطوط المجال الكهربي وتتجه دائماً نحو:", options: ["الشحنة الموجبة", "الشحنة السالبة", "مركز الأرض", "الفراغ المطلق"], answer: 1, exp: "مسار حركة شحنة الاختبار الموجبة ينتهي دائماً بالانجذاب للشحنة السالبة." },
+            { q: "من أهم خواص خطوط المجال الكهربي أنها خطوط وهمية مرنة:", options: ["تتقاطع أحياناً", "لا تتقاطع مع بعضها", "منكسرة في الفراغ", "حلزونية دائماً"], answer: 1, exp: "خطوط المجال الكهربي مستحيل أن تتقاطع، وتنتهي على أسطح المعادن ولا تخترقها." },
+            { q: "خطوط القوى الكهربية بين لوحين معدنيين متوازيين مختلفين تكون:", options: ["متوازية تقريباً", "دائرية مقفلة", "عشوائية وغير منتظمة", "متقاطعة"], answer: 0, exp: "المجال بين لوحين متوازيين يكون منتظماً وخطوطه متوازية ومستقيمة." },
+            { q: "يتركب الكشاف الكهربي (الإلكتروسكوب) أساساً من ساق نحاسية تنتهي بـ:", options: ["ورقتين من الذهب", "قرصين من الحديد", "إبرة مغناطيسية", "مصباح صغير"], answer: 0, exp: "ورقتا الذهب الرقيقتان تتحركان وتنفرجان بسهولة عند مرور الشحنات." },
+            { q: "سدادة وعاء الكشاف الكهربي تصنع من المطاط لأنها:", options: ["مرنة وموصلة", "عازلة تمنع تسرب الشحنات", "ثقيلة الوزن", "تتحمل الضغط"], answer: 1, exp: "المطاط عازل يمنع انتقال الشحنة من الساق النحاسية إلى الجدار الزجاجي." },
+            { q: "عند لمس قرص كشاف متعادل بساق سالبة الشحنة فإن ورقتيه:", options: ["تنطبقان", "تنفرجان لاكتسابهما شحنة سالبة", "تسقطان", "لا تتأثران"], answer: 1, exp: "تنتقل الشحنات بالتلامس فيكتسب الكشاف شحنة سالبة وتتنافر الورقتان." },
+            { q: "تقريب جسم يحمل نفس شحنة الكشاف المشحون من قرصه يؤدي إلى:", options: ["نقصان انفراج ورقتيه", "زيادة انفراج ورقتيه", "انطباق تام للورقتين", "تفريغ فوري"], answer: 1, exp: "تشابه نوع الشحنة يزيد من قوة التنافر بين ورقتي الكشاف فيزداد انفراجهما." },
+            { q: "تقريب جسم يحمل شحنة مخالفة لشحنة الكشاف من قرصه يؤدي إلى:", options: ["زيادة الانفراج", "نقصان انفراج ورقتيه", "ثبات الورقتين", "اشتعال الورقتين"], answer: 1, exp: "اختلاف الشحنة يقلل من الشحنات المتجمعة على الورقتين فيقل الانفراج." },
+            { q: "تساقط قصاصات الورق بعد انجذابها للمشط بلحظات سببه:", options: ["فقدان جاذبيتها", "اكتسابها نفس شحنة المشط باللمس فتنافرت", "ثقل وزنها", "احتراقها"], answer: 1, exp: "ملامسة القصاصات للمشط تشحنها بنفس نوع شحنته فيحدث تنافر وتسقط." }
+        ],
+        2: [ // الدرس الثاني: القوى المغناطيسية (50 سؤالاً)
+            { q: "المغناطيس الطبيعي عبارة عن خام من خامات الحديد يعرف باسم:", options: ["الهيماتيت", "الماجنتيت (حجر المغناطيس)", "الليمونيت", "البوكسيت"], answer: 1, exp: "المغناطيس الطبيعي هو حجر أسود من أكسيد الحديد يسمى الماجنتيت." },
+            { q: "اكتشف المغناطيس الطبيعي قديماً في منطقة تسمى:", options: ["أثينا", "مغنيسيا باليونان", "طيبة بمصر", "روما"], answer: 1, exp: "اكتشفه اليونانيون القدماء في منطقة مغنيسيا ومنها اشتُق اسم المغناطيس." },
+            { q: "بدأت صناعة المغناطيسات الصناعية المتنوعة في القرن:", options: ["الخامس عشر", "السابع عشر", "التاسع عشر", "العشرين"], answer: 2, exp: "تطورت صناعة المغناطيسات الصناعية بمختلف الأشكال في القرن الـ 19." },
+            { q: "يرمز للقطب الشمالي للمغناطيس بالحرف:", options: ["S", "N", "E", "W"], answer: 1, exp: "حرف N اختصار لكلمة North أي الشمال." },
+            { q: "يُميز القطب الشمالي للمغناطيس غالباً باللون:", options: ["الأزرق", "الأخضر", "الأحمر", "الأصفر"], answer: 2, exp: "اصطلح علمياً على تمييز القطب الشمالي N باللون الأحمر." },
+            { q: "يرمز للقطب الجنوبي للمغناطيس بالرمز (S) ويميز غالباً باللون:", options: ["الأزرق", "الأحمر", "الأسود", "الأبيض"], answer: 0, exp: "يرمز له بالرمز S (South) ويميز عادة باللون الأزرق." },
+            { q: "عند تجزئة مغناطيس إلى جزأين، فإن كل جزء منهما:", options: ["يفقد خواصه", "يصبح قطباً منفرداً", "يكون مغناطيساً جديداً له قطبان", "يتحول لمادة عازلة"], answer: 2, exp: "لا يوجد قطب منفرد في الطبيعة، وكل قطعة تصبح مغناطيساً كاملاً بقطبين N و S." },
+            { q: "لا يمكن في الطبيعة أبداً الحصول على:", options: ["مغناطيس حلقي", "قطب مغناطيسي منفرد", "إبرة بوصلة", "مجال قوي"], answer: 1, exp: "الأقطاب المغناطيسية تتواجد دائماً في أزواج متلازمة (شمالي وجنوبي)." },
+            { q: "أي من الأشكال الآتية يمثل أحد أشكال المغناطيس الصناعي؟", options: ["حدوة الحصان", "القضيب والأسطوانة", "الحلقة والإبرة", "جميع ما سبق"], answer: 3, exp: "يُصنع المغناطيس بأشكال هندسية متعددة تناسب كل استخدام." },
+            { q: "المواد التي تنجذب إلى المغناطيس تسمى المواد:", options: ["الموصلة", "المغناطيسية", "العازلة", "الشفافة"], answer: 1, exp: "المواد المغناطيسية هي المواد القابلة للانجذاب للمغناطيس." },
+            { q: "أي من المعادن الآتية يعتبر مادة مغناطيسية تنجذب للمغناطيس؟", options: ["النحاس", "الكوبلت", "الفضة", "الذهب"], answer: 1, exp: "الحديد والنيكل والكوبلت من أشهر المواد المغناطيسية." },
+            { q: "كل المواد الآتية لا تنجذب للمغناطيس ما عدا:", options: ["الألومنيوم", "النيكل", "الخشب", "الزجاج"], answer: 1, exp: "النيكل فلز مغناطيسي ينجذب بقوة نحو المغناطيس." },
+            { q: "عند تقريب مغناطيس من خليط نحاس وبرادة حديد ورمل ينجذب:", options: ["برادة الحديد فقط", "النحاس وبرادة الحديد", "الرمل فقط", "كل الخليط"], answer: 0, exp: "الحديد فقط مادة مغناطيسية بينما النحاس والرمل مواد غير مغناطيسية." },
+            { q: "يعتبر الحديد المطاوع من المواد:", options: ["غير المغناطيسية", "المغناطيسية", "العازلة للقوة", "المشعة"], answer: 1, exp: "الحديد المطاوع ينجذب بشدة للمغناطيس ويدخل في صناعة المغناطيس المؤقت." },
+            { q: "تتركز قوة جذب المغناطيس وتكون أكبر ما يمكن عند:", options: ["منتصف المغناطيس", "قطبي المغناطيس", "أحد الجوانب فقط", "السطح بالتساوي"], answer: 1, exp: "شدة المجال المغناطيسي تبلغ أقصى ذروة لها عند قطبي المغناطيس." },
+            { q: "تنعدم قوة جذب المغناطيس أو تكاد عند:", options: ["القطب الشمالي", "القطب الجنوبي", "منتصف المغناطيس", "الحافة"], answer: 2, exp: "تقل القوة المغناطيسية تدريجياً بالاقتراب من منتصف المغناطيس حتى تنعدم." },
+            { q: "كثافة برادة الحديد المنجذبة للمغناطيس تكون أكبر ما يمكن عند:", options: ["المنتصف", "القطبين", "الطرف العلوي", "القاعدة"], answer: 1, exp: "تتزاحم برادة الحديد بكثافة عند القطبين لتركز القوة المغناطيسية عندهما." },
+            { q: "عند تعليق مغناطيس تعليقاً حراً، فإنه يتخذ اتجاهاً ثابتاً هو:", options: ["شرق - غرب", "شمال - جنوب جغرافي", "شمال شرقي", "دوران مستمر"], answer: 1, exp: "يستجيب المغناطيس الحر لمجال الأرض المغناطيسي فيتجه شمالاً وجنوباً." },
+            { q: "يستقر المغناطيس المعلق حراً في اتجاه ثابت لأن الأرض تعمل كـ:", options: ["جسم معتم", "مغناطيس ضخم", "شحنة سالبة", "كتلة متجمدة"], answer: 1, exp: "باطن الأرض يولد مجالاً مغناطيسياً هائلاً كأنها مغناطيس ضخم." },
+            { q: "القطب الشمالي للمغناطيس الحر يشير نحو:", options: ["الجنوب الجغرافي", "الشمال الجغرافي للأرض", "الشرق", "الغرب"], answer: 1, exp: "القطب الباحث عن الشمال N يتجه دائماً نحو الشمال الجغرافي." },
+            { q: "القطب الشمالي الجغرافي للأرض يمثل تقريباً قطباً مغناطيسياً للأرض نوعه:", options: ["شمالي (N)", "جنوبي (S)", "متعادل", "منعدم"], answer: 1, exp: "لأن القطب الشمالي للمغناطيس ينجذب إليه، فالشمال الجغرافي يقابله قطب مغناطيسي جنوبي." },
+            { q: "القطب الجنوبي الجغرافي للأرض يمثل قطباً مغناطيسياً للأرض نوعه:", options: ["شمالي (N)", "جنوبي (S)", "أفقي", "مائل"], answer: 0, exp: "الجنوب الجغرافي يقابله في باطن الأرض قطب مغناطيسي شمالي N." },
+            { q: "أداة تستخدم لتحديد الاتجاهات الأصلية وتعتمد على إبرة ممغنطة هي:", options: ["الترمومتر", "البوصلة", "الأميتر", "البارومتر"], answer: 1, exp: "البوصلة إبرة مغناطيسية حرة الحركة تتيح معرفة الاتجاهات الأربعة بدقة." },
+            { q: "تصنع علبة البوصلة من مواد غير مغناطيسية مثل:", options: ["الحديد المطاوع", "الفولاذ", "النحاس أو البلاستيك", "النيكل"], answer: 2, exp: "النحاس والبلاستيك مواد لا تنجذب للمغناطيس وتضمن حرية حركة الإبرة." },
+            { q: "علل: تصنع علبة البوصلة من النحاس أو الألمنيوم:", options: ["لتخفيف الوزن", "لكي لا تنجذب الإبرة للعلبة وتعيق حركتها", "لتقوية المجال", "لمنع الصدأ"], answer: 1, exp: "حتى لا تجذب العلبة الإبرة المغناطيسية فتعطي قراءات خاطئة." },
+            { q: "الأداة التي تستخدم برادة الحديد للكشف عن البصمات الجنائية هي:", options: ["الميكروسكوب", "الفرشاة المغناطيسية", "الكشاف الكهربي", "العدسة"], answer: 1, exp: "الفرشاة المغناطيسية تجذب برادة الحديد وتمررها بلطف فوق البصمات." },
+            { q: "فكرة الفرشاة المغناطيسية تعتمد على جذب برادة الحديد لتلتصق بـ:", options: ["شحنات السطح", "آثار الزيوت والعرق للبصمة", "الخشب", "الدهان"], answer: 1, exp: "حبيبات البرادة تلتصق بالمواد الدهنية الدقيقة التي تتركها بصمات الأصابع." },
+            { q: "ينص قانون التجاذب والتنافر المغناطيسي على أن الأقطاب المتشابهة:", options: ["تتجاذب", "تتنافر", "تتعادل", "تتلاصق"], answer: 1, exp: "الأقطاب المتماثلة (N مع N) أو (S مع S) تتدافع وتتنافر." },
+            { q: "عند تقريب قطب شمالي لمغناطيس من قطب شمالي لمغناطيس آخر معلق:", options: ["يتجاذبان", "يتنافران ويبتعدان", "يدوران في مكانهما", "لا تتأثران"], answer: 1, exp: "كلا القطبين متشابهان، والقاعدة تنص على تنافر الأقطاب المتشابهة." },
+            { q: "عند تقريب قطب شمالي من قطب جنوبي لمغناطيس آخر، يحدث بينهما:", options: ["تنافر", "تجاذب واقتراب", "تفريغ مغناطيسي", "تلاشي للقوة"], answer: 1, exp: "الأقطاب المختلفة تتجاذب وتقترب من بعضها بقوة." },
+            { q: "مغناطيسان حلقيان فوق حامل رأسي تباعدا في الهواء، هذا دليل على أن الوجهين المتقابلين:", options: ["مختلفان في القطبية", "متشابهان في القطبية", "غير ممغنطين", "مصنوعان من خشب"], answer: 1, exp: "التنافر والتدافع في الهواء يثبت تشابه قطبي الوجهين المتقابلين." },
+            { q: "المنطقة المحيطة بالمغناطيس وتظهر فيها آثار قوته المغناطيسية هي:", options: ["الجهد المغناطيسي", "المجال المغناطيسي", "خط القوة", "الحيز الحركي"], answer: 1, exp: "المجال المغناطيسي هو الحيز المحيط الذي تظهر فيه آثار القوة المغناطيسية." },
+            { q: "يمكن تخطيط ورؤية شكل خطوط المجال المغناطيسي عملياً بنثر:", options: ["مسحوق الطباشير", "برادة الحديد", "السكر", "رذاذ الماء"], answer: 1, exp: "برادة الحديد تترتب على هيئة مسارات منحنية توضح شكل المجال." },
+            { q: "خطوط المجال المغناطيسي هي خطوط:", options: ["حقيقية تراها العين", "وهمية تعبر عن القوة المغناطيسية", "منكسرة ومتداخلة", "تتقاطع عند الحواف"], answer: 1, exp: "هي خطوط وهمية منحنية ومغلقة لا تتقاطع مع بعضها أبداً." },
+            { q: "تبدأ خطوط المجال المغناطيسي خارج المغناطيس من القطب:", options: ["الجنوبي للشمالي", "الشمالي للجنوبي", "الوسط للأطراف", "الجنوبي للمالانهاية"], answer: 1, exp: "تخرج خطوط المجال من القطب الشمالي N وتنحني باتجاه القطب الجنوبي S." },
+            { q: "تنتهي خطوط المجال المغناطيسي خارج المغناطيس عند القطب:", options: ["الشمالي (N)", "الجنوبي (S)", "المركزي", "الشرقي"], answer: 1, exp: "مسار الخطوط ينتهي خارجياً بالدخول في القطب الجنوبي S." },
+            { q: "تتزاحم خطوط المجال المغناطيسي بكثافة شديدة عند:", options: ["المنتصف", "القطبين", "أعلى المغناطيس", "الزوايا فقط"], answer: 1, exp: "كثافة وتزاحم الخطوط عند القطبين يعكس قوة جذب المغناطيس العالية هناك." },
+            { q: "تزاحم خطوط المجال المغناطيسي عند القطبين يدل على أن القوة هناك:", options: ["ضعيفة جداً", "أكبر ما يمكن", "منعدمة تماماً", "عشوائية"], answer: 1, exp: "كلما تقاربت وتزاحمت خطوط المجال دل ذلك على شدة القوة المغناطيسية." },
+            { q: "عند تقابل قطبين شماليين لمغناطيسين، فإن خطوط المجال بينهما:", options: ["تتلاقى وتلتحم", "تتنافر وتتباعد مكونة نقطة تعادل", "تستقيم وتتوازى", "تنكسر بزاوية قائمة"], answer: 1, exp: "تتباعد الخطوط وتتنافر مما يفسر حدوث قوى التنافر بين القطبين المتشابهين." },
+            { q: "عند تقابل قطب شمالي مع قطب جنوبي لمغناطيسين، خطوط المجال:", options: ["تخرج من الشمالي لتدخل الجنوبي مباشرة", "تتنافر مبتعدة", "تدور في حلقات مغلقة حول كل قطب", "تنعدم"], answer: 0, exp: "تتصل الخطوط خارجة من القطب الشمالي للأول وداخلة في جنوبي الآخر محدثة تجاذباً." },
+            { q: "تعتبر القوة المغناطيسية من قوى:", options: ["التلامس المباشر", "التأثير عن بعد (قوى مجال)", "الاحتكاك الميكانيكي", "المرونة"], answer: 1, exp: "المغناطيس يجذب الأجسام دون اشتراط تلامس مادي مباشر." },
+            { q: "الدليل على أن القوة المغناطيسية قوة مجال هو:", options: ["جذب المغناطيس للمسامير قبل ملامستها", "ثقل كتلة المغناطيس", "تغير لون المغناطيس", "صلابة المغناطيس"], answer: 0, exp: "تحرك المسامير وانجذابها عن بعد يثبت وجود مجال قوى محيط." },
+            { q: "القوة المتبادلة بين مغناطيس ومادة مغناطيسية هي قوة:", options: ["تنافر فقط", "تجاذب فقط", "تجاذب أو تنافر", "احتكاك"], answer: 1, exp: "المغناطيس يجذب المواد المغناطيسية دائماً ولا ينفرها." },
+            { q: "القوة المتبادلة بين مغناطيسين اثنين يمكن أن تكون:", options: ["تجاذب فقط", "تنافر فقط", "إما تجاذب وإما تنافر", "منعدمة دائماً"], answer: 2, exp: "حسب نوع الأقطاب المتقابلة: إما تجاذب (مختلفة) أو تنافر (متشابهة)." },
+            { q: "تنفذ القوة المغناطيسية خلال المواد غير المغناطيسية مثل:", options: ["الورق المقوى والزجاج واليد", "الحديد السميك", "الصلب والنيكل", "خام الماجنتيت"], answer: 0, exp: "المجال المغناطيسي يعبر خلال الأجسام غير القابلة للتمغنط بسهولة." },
+            { q: "تحريك مغناطيس فوق لوح زجاجي يقع تحته مشبك ورق يؤدي إلى:", options: ["تحرك المشبك تبعاً للمغناطيس", "عدم تأثر المشبك إطلاقاً", "انكسار الزجاج", "فقدان المغناطيسية"], answer: 0, exp: "نفاذ خطوط المجال خلال الزجاج يجعل المشبك يتبع حركة المغناطيس." },
+            { q: "تتشابه خطوط المجال المغناطيسي والكهربي في أن كليهما خطوط:", options: ["مرئية", "وهمية لا تتقاطع", "تنتهي داخل النواة", "مستقيمة دوماً"], answer: 1, exp: "كلاهما خطوط وهمية مرنة تعبر عن شدة واتجاه المجال ولا تتقاطع." },
+            { q: "تختلف خطوط المجال المغناطيسي عن الكهربي في أنها تخرج من:", options: ["الشحنة السالبة", "القطب الشمالي وتنتهي بالجنوبي", "اللوح السالب", "الإلكترونات"], answer: 1, exp: "المجال الكهربي يبدأ من الموجب، أما المغناطيسي فيخرج من القطب الشمالي." },
+            { q: "وضع قطعة حديد داخل المجال المغناطيسي دون لمس يجعلها:", options: ["تتنافر فوراً", "تنجذب بقوة المغناطيس عن بعد", "تصبح عازلة", "تفقد كتلتها"], answer: 1, exp: "وقوعها داخل حيز المجال يخضعها لقوة جذب مغناطيسية عن بعد." },
+            { q: "إبرة البوصلة الموضوعة بجوار قطب شمالي لمغناطيس ينحرف قطبها الشمالي:", options: ["نحوه مباشرة", "مبتعداً عنه باتجاه خطوط المجال", "بزاوية قائمة ثنائية", "نحو المركز"], answer: 1, exp: "يتنافر قطبها الشمالي مع شمالي المغناطيس ويوجهها خط المجال نحو قطبه الجنوبي." }
+        ],
+        3: [ // الدرس الثالث: قوى الجاذبية (50 سؤالاً)
+            { q: "تصنف قوى الطبيعة الأساسية إلى نوعين هما قوى مجال وقوى:", options: ["طاقة", "تلامس", "حركة", "كيميائية"], answer: 1, exp: "تصنف القوى إما قوى تلامس كالاحتكاك أو قوى مجال كالمغناطيسية والجاذبية." },
+            { q: "أي من القوى الآتية يعتبر من قوى التلامس المباشر؟", options: ["قوة الجاذبية", "قوة الاحتكاك", "القوة المغناطيسية", "القوة الكهربية"], answer: 1, exp: "الاحتكاك يتطلب تلامساً مادياً مباشراً بين سطحي الجسمين المتلامسين." },
+            { q: "جميع القوى الآتية تعتبر قوى مجال ما عدا:", options: ["القوة المغناطيسية", "قوة الجاذبية", "قوى المرونة والتصادم", "القوى الكهروستاتيكية"], answer: 2, exp: "التصادم والمرونة من قوى التلامس التي تشترط ملامسة الأجسام." },
+            { q: "تعتبر قوى الجاذبية قوى مجال لأنها تؤثر على الأجسام:", options: ["بالتلامس فقط", "عن بعد دون الحاجة لتلامس", "في وجود الهواء فقط", "بسرعة متغيرة"], answer: 1, exp: "الجاذبية تؤثر على الكتل عبر الفراغ دون الحاجة لأي اتصال مادي." },
+            { q: "العالم الذي اكتشف قانون الجاذبية وسُميت وحدة القوة باسمه هو:", options: ["شارل كولوم", "إسحاق نيوتن", "فاراداي", "أينشتاين"], answer: 1, exp: "العالم الإنجليزي إسحاق نيوتن مكتشف قانون الجاذبية العامة." },
+            { q: "وحدة قياس القوة والوزن في النظام الدولي هي:", options: ["الجول", "الكيلوجرام", "النيوتن", "الوات"], answer: 2, exp: "النيوتن N هو الوحدة الدولية المعتمدة لقياس جميع أنواع القوى والوزن." },
+            { q: "قوة الجاذبية الأرضية تسحب وتجذب دائماً جميع الأجسام نحو:", options: ["الغلاف الجوي", "مركز الأرض", "الفضاء الخارجي", "خط الاستواء"], answer: 1, exp: "اتجاه قوة جذب الأرض يوجه دائماً إلى نقطة مركز كوكب الأرض." },
+            { q: "الحيز المحيط بالأرض وتؤثر فيه قوة جذبها للأجسام يسمى:", options: ["الغلاف الغازي", "مجال الجاذبية الأرضية", "المدار الشمسي", "المدار البيضاوي"], answer: 1, exp: "مجال الجاذبية هو المنطقة المكانية التي تمتد فيها قوة جذب الأرض." },
+            { q: "قوى الجاذبية المتبادلة بين الأجسام في الكون هي قوى:", options: ["تجاذب فقط دائماً", "تنافر فقط", "تجاذب أو تنافر", "عشوائية الاتجاه"], answer: 0, exp: "الجاذبية تتميز عن غيرها بأنها قوة جذب دائمة ولا تعرف التنافر." },
+            { q: "قوة التجاذب بين أي جسمين ماديين تكون متبادلة وتؤثر على كل منهما:", options: ["بمقادير مختلفة", "بنفس المقدار في اتجاهين متضادين", "باتجاه الجسم الأكبر فقط", "دون تأثير ملموس"], answer: 1, exp: "قوة الجاذبية قوة فعل ورد فعل متساوية مقداراً ومتعاكسة اتجاهاً." },
+            { q: "تزداد قوة التجاذب المادي بين جسمين كلما:", options: ["زادت كتلتاهما ونقصت المسافة بينهما", "نقصت كتلتاهما", "زادت المسافة بين مركزيهما", "ابتعدا عن بعضهما"], answer: 0, exp: "الجاذبية طردية مع حاصل ضرب الكتلتين وعكسية مع مربع المسافة." },
+            { q: "تقل قوة التجاذب بين جسمين إلى الربع إذا زادت المسافة بين مركزيهما إلى:", options: ["الضعف", "ثلاثة أمثال", "أربعة أمثال", "النصف"], answer: 0, exp: "وفقاً لقانون التربيع العكسي، مضاعفة المسافة 2x تقلل القوة إلى 1/4." },
+            { q: "لا نشعر بقوة الجاذبية المتبادلة بين شخصين يقفان متجاورين بسبب:", options: ["وجود الهواء", "صغر كتلتهما فتكون القوة ضعيفة جداً", "شحنتهما الكهربية", "حركة الأرض"], answer: 1, exp: "قوة الجاذبية تعتمد على الكتل، وتكون متناهية الصغر مع الأجسام الدقيقة." },
+            { q: "تظهر قوة الجاذبية بوضوح هائل ومؤثر بين الأجرام السماوية بسبب:", options: ["سرعتها الكبيرة", "ضخامة كتلها الهائلة", "الفراغ الكوني", "درجة حرارتها"], answer: 1, exp: "كتل الكواكب والنجوم بالغة الضخامة مما يجعل جاذبيتها جبارة ومحسوسة." },
+            { q: "ظاهرة الارتفاع والانحسار الدوري لمياه البحار والمحيطات هي:", options: ["التيارات المائية", "المد والجزر", "الأمواج الزلزالية", "الأعاصير"], answer: 1, exp: "المد والجزر هو التغير الدوري في مستوى مياه المحيطات والبحار." },
+            { q: "تحدث ظاهرة المد والجزر أساساً نتيجة التجاذب بين الأرض و:", options: ["القمر (والشمس)", "المريخ", "السحب الركامية", "الرياح الموسمية"], answer: 0, exp: "جاذبية القمر المؤثرة على مياه الأرض هي المسبب الرئيس لظاهرة المد والجزر." },
+            { q: "يكون المد والجزر في أعلى ذروة ونشاط له عندما يكون القمر في طور:", options: ["المحاق أو البدر", "الهلال الجديد", "التربيع الأول", "الأحدب"], answer: 0, exp: "تتعامد وتتآزر جاذبية الشمس والقمر عندما يكون القمر بدراً أو محاقاً." },
+            { q: "تتكرر ظاهرة المد والجزر بشكل دوري منتظم بمعدل:", options: ["مرة يومياً", "مرتين يومياً (مرة كل 12 ساعة)", "مرة كل أسبوع", "مرة كل شهر"], answer: 1, exp: "بسبب دوران الأرض يحدث المد والجزر بانتظام مرتين كل 24 ساعة تقريباً." },
+            { q: "يحدث أعلى فارق للمد والجزر في العالم (حوالي 19 متراً) في خليج:", options: ["السويس بمصر", "فندي بكندا", "العقبة", "المكسيك"], answer: 1, exp: "خليج فندي بكندا يسجل أعلى فارق منسوب مائي طبيعي لظاهرة المد والجزر." },
+            { q: "من أهم الفوائد الاقتصادية لظاهرة المد والجزر:", options: ["توليد الكهرباء النظيفة المتجددة", "استخراج البترول", "زيادة ملوحة البحر", "خفض الحرارة"], answer: 0, exp: "تُبنى توربينات خاصة في مضائق المد لتوليد طاقة كهربائية متجددة ونظيفة." },
+            { q: "مناطق في الفضاء تتميز بجاذبية هائلة تمنع الضوء من الهروب منها هي:", options: ["الشهب", "الثقوب السوداء", "الكويكبات", "الأقزام البيضاء"], answer: 1, exp: "الثقب الأسود منطقة ذات كثافة وجاذبية فائقة لدرجة ابتلاع فوتونات الضوء." },
+            { q: "تتكون الثقوب السوداء في الكون نتيجة:", options: ["انكماش وانهيار نجم ضخم في نهاية حياته", "اصطدام كوكبين", "انفجار بركان بالفضاء", "تجمع الغازات العادية"], answer: 0, exp: "موت النجوم العملاقة وتكدس كتلتها بعد الانهيار ينتج الثقوب السوداء." },
+            { q: "دوران الأجرام في مسارات محددة ومنحنية حول جسم مركزي يسمى:", options: ["الحركة الاهتزازية", "الحركة المدارية", "الحركة الانتقالية", "الموجات"], answer: 1, exp: "الحركة المدارية تنشأ نتيجة قوة التجاذب المركزي بين الجسمين." },
+            { q: "يرجع استمرار دوران القمر في مساره المداري حول الأرض إلى:", options: ["المجال المغناطيسي", "قوة التجاذب (الجاذبية) بين الأرض والقمر", "الضغط الجوي", "الرياح الفضائية"], answer: 1, exp: "جاذبية الأرض تعمل كقوة جذب مركزية تحافظ على مسار القمر المنحني." },
+            { q: "تدور كواكب المجموعة الشمسية بانتظام في مداراتها حول الشمس بفعل:", options: ["قوة جاذبية الشمس الهائلة", "الشحنات الساكنة للكواكب", "الاصطدامات المستمرة", "فراغ الفضاء"], answer: 0, exp: "كتلة الشمس تمثل أكثر من 99% من النظام الشمسي فتجذب الكواكب لمداراتها." },
+            { q: "الأقمار الصناعية تظل في مداراتها حول الأرض بفعل:", options: ["وقود محركاتها الدائم", "جاذبية الأرض المؤثرة كقوة مركزية", "مغناطيسية القطبين", "التيارات الهوائية"], answer: 1, exp: "توازن سرعة إطلاق القمر الصناعي مع جاذبية الأرض يجعله مستقراً في مداره." },
+            { q: "أضعف القوى الأساسية المؤثرة داخل الذرة بين النواة والإلكترونات هي:", options: ["القوة الكهربية", "قوة الجاذبية", "القوة النووية", "القوة الكهرومغناطيسية"], answer: 1, exp: "كتل الإلكترونات والبروتونات بالغة الصغر فتكون الجاذبية بينها الأضعف إطلاقاً." },
+            { q: "القوة المسؤولة عن دوران الإلكترونات السالبة حول النواة الموجبة بالذرة هي:", options: ["قوة الجاذبية فقط", "القوة الكهربية (التجاذب الكهروستاتيكي)", "الاحتكاك", "قوة الدفع"], answer: 1, exp: "التجاذب الكهربي بين شحنة النواة الموجبة والإلكترونات السالبة هو الأساس." },
+            { q: "مقدار ما يحتويه الجسم من مادة هو تعريف:", options: ["الوزن", "الكتلة", "الكثافة", "الحجم"], answer: 1, exp: "الكتلة هي المقدار الثابت الذي يمثل كمية المادة داخل الجسم." },
+            { q: "تقاس كتلة الأجسام بوحدة:", options: ["النيوتن", "الكيلوجرام (kg)", "المتر", "الكولوم"], answer: 1, exp: "الكيلوجرام والجرام هما وحدتا قياس كتلة المواد." },
+            { q: "قوة جذب الأرض للجسم تسمى:", options: ["الكتلة", "الوزن", "الشغل", "الطاقة"], answer: 1, exp: "الوزن هو مقدار قوة جذب كوكب الأرض المؤثرة على كتلة الجسم." },
+            { q: "يقاس وزن الأجسام في النظام الدولي بوحدة:", options: ["الكيلوجرام", "النيوتن (N)", "الجرام", "الجول"], answer: 1, exp: "لأن الوزن قوة جذب فإنه يُقاس بوحدة النيوتن N." },
+            { q: "الجهاز المستخدم لقياس وزن الأجسام هو:", options: ["الميزان ذو الكفتين", "الميزان الزنبركي (نيوتن ميتر)", "الكولوم ميتر", "البوصلة"], answer: 1, exp: "الميزان الزنبركي يقيس الوزن بمقدار استطالة وتمدد السلك النابض." },
+            { q: "فكرة عمل الميزان الزنبركي تعتمد على قياس:", options: ["مقدار التمدد والاستطالة في السلك الزنبركي", "حجم الجسم المزاح", "درجة حرارة النابض", "المقاومة الكهربية"], answer: 0, exp: "استطالة الزنبرك تتناسب طردياً مع وزن الجسم المعلق فيه." },
+            { q: "إذا كانت كتلة رائد فضاء على الأرض 60 كجم، فإن كتلته على القمر تكون:", options: ["10 كجم", "60 كجم", "360 كجم", "صفر كجم"], answer: 1, exp: "الكتلة مقدار ثابت لا يتغير بتغير المكان أو الكوكب." },
+            { q: "كتلة الجسم عند انتقاله من مكان لآخر في الكون:", options: ["تتغير حسب الارتفاع", "تظل ثابتة لا تتغير أبداً", "تقل بالصعود لأعلى", "تتضاعف"], answer: 1, exp: "الكتلة ثابتة دوماً لأن كمية مادة الجسم لا تتغير بنقله لأي مكان." },
+            { q: "يحسب وزن الجسم (w) من العلاقة الرياضية:", options: ["w = m ÷ g", "w = m × g", "w = g ÷ m", "w = m + g"], answer: 1, exp: "الوزن = الكتلة بالكيلوجرام × شدة مجال الجاذبية (w = m × g)." },
+            { q: "تقدر شدة مجال الجاذبية عند سطح الأرض تقريباً بقيمة:", options: ["1.6 N/kg", "9.8 أو 10 N/kg تقريباً", "100 N/kg", "0.98 N/kg"], answer: 1, exp: "شدة مجال جاذبية الأرض تقدر بنحو 9.8 نيوتن/كجم وتُقرب إلى 10." },
+            { q: "جسم كتلته 5 كجم على سطح الأرض، يكون وزنه تقريباً (حيث g = 10 N/kg):", options: ["0.5 N", "5 N", "50 N", "500 N"], answer: 2, exp: "الوزن = 5 كجم × 10 = 50 نيوتن." },
+            { q: "جسم وزنه على الأرض 120 نيوتن، تكون كتلته تقريباً (حيث g = 10):", options: ["12 كجم", "1200 كجم", "1.2 كجم", "72 كجم"], answer: 0, exp: "الكتلة = الوزن ÷ الجاذبية = 120 ÷ 10 = 12 كجم." },
+            { q: "وزن الجسم على سطح القمر يعادل تقريباً ............. وزنه على الأرض:", options: ["ضعف", "سدس (1/6)", "ثلث (1/3)", "نصف (1/2)"], answer: 1, exp: "جاذبية القمر أضعف وتعادل سدس 1/6 جاذبية كوكب الأرض." },
+            { q: "وزن الأجسام على القمر أقل من وزنها على الأرض لأن:", options: ["كتلة القمر أصغر وجاذبيته سدس جاذبية الأرض", "القمر ليس فيه ماء", "القمر يدور بسرعة", "كتلة الجسم تنقص"], answer: 0, exp: "صغر كتلة القمر تجعل شدة مجال جاذبيته تعادل سدس جاذبية الأرض." },
+            { q: "إذا كان وزن شخص على الأرض 600 نيوتن، فإن وزنه على سطح القمر يساوي:", options: ["600 نيوتن", "100 نيوتن", "3600 نيوتن", "60 نيوتن"], answer: 1, exp: "وزنه على القمر = 600 ÷ 6 = 100 نيوتن." },
+            { q: "إذا كان وزن جسم على سطح القمر 20 نيوتن، فإن وزنه على سطح الأرض يساوي:", options: ["3.33 نيوتن", "120 نيوتن", "20 نيوتن", "200 نيوتن"], answer: 1, exp: "الوزن على الأرض = الوزن على القمر × 6 = 20 × 6 = 120 نيوتن." },
+            { q: "كلما ارتفعنا للأعلى مبتعدين عن مركز كوكب الأرض، فإن شدة الجاذبية:", options: ["تزداد تدريجياً", "تقل تدريجياً", "تظل ثابتة تماماً", "تتضاعف"], answer: 1, exp: "شدة الجاذبية تقل كلما زاد البعد عن مركز الأرض." },
+            { q: "ينعدم وزن الأجسام تقريباً في:", options: ["قمم الجبال العالية", "الفضاء الخارجي البعيد عن الجاذبية", "مستوى سطح البحر", "قيعان المحيطات"], answer: 1, exp: "الابتعاد التام عن مجالات جاذبية الكواكب يسبب انعدام الوزن." },
+            { q: "تتجه خطوط مجال الجاذبية الأرضية دائماً نحو:", options: ["الفضاء الخارجي", "مركز الأرض", "القطب الشمالي فقط", "الغرب"], answer: 1, exp: "خطوط مجال الجاذبية تتجه للداخل عمودياً نحو مركز الأرض." },
+            { q: "النسبة بين كتلة جسم على الأرض إلى كتلته على القمر تساوي:", options: ["6 : 1", "1 : 6", "1 : 1", "3 : 1"], answer: 2, exp: "الكتلة لا تتغير مطلقاً بين الأرض والقمر فالنسبة بينهما 1 : 1." },
+            { q: "النسبة بين وزن جسم على القمر إلى وزنه على سطح الأرض تساوي تقريباً:", options: ["1 : 6", "6 : 1", "1 : 1", "1 : 2"], answer: 0, exp: "وزن الجسم على القمر سدس وزنه على سطح الأرض (1 إلى 6)." },
+            { q: "وجه الاختلاف بين قوى الجاذبية وكل من الكهربية والمغناطيسية هو أن الجاذبية:", options: ["قوى تلامس فقط", "قوى تجاذب وتنافر", "قوى تجاذب فقط دائماً", "قوى ضعيفة تنعدم بالهواء"], answer: 2, exp: "الكهربية والمغناطيسية فيها تجاذب وتنافر، أما الجاذبية فقوة تجاذب فقط." }
+        ]
+    };
+
+    // نصائح تربوية وأخلاقية
+    const moralAdvices = [
+        "«مَن سَلَكَ طَرِيقًا يَلْتَمِسُ فِيهِ عِلْمًا، سَهَّلَ اللَّهُ لَهُ بِهِ طَرِيقًا إِلَى الْجَنَّةِ»",
+        "احرص على بر والديك وطاعتهما، فبر الوالدين هو مفتاح التوفيق والنجاح في حياتك.",
+        "الصدق في القول والعمل من أعظم خصال المسلم، وهو طريق النجاة والبركة.",
+        "عامل زملاءك وإخوانك بحسن الخلق؛ «إنما بعثت لأتمم مكارم الأخلاق».",
+        "العلم النافع هو الذي يثمر عملاً صالحاً ونفعاً للناس وأثراً طيباً في الأرض.",
+        "من علامات توفيق الطالب استغلال وقته وتنظيمه والبعد عن التسويف والمماطلة."
+    ];
+
+    // مؤثرات صوتية
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playBeep(type) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+
+        const now = audioCtx.currentTime;
+        if (type === 'correct') {
+            osc.frequency.setValueAtTime(523.25, now);
+            osc.frequency.exponentialRampToValueAtTime(783.99, now + 0.18);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+            osc.start(now);
+            osc.stop(now + 0.25);
+        } else if (type === 'wrong') {
+            osc.frequency.setValueAtTime(220, now);
+            osc.frequency.setValueAtTime(140, now + 0.2);
+            gain.gain.setValueAtTime(0.25, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
+            osc.start(now);
+            osc.stop(now + 0.35);
+        } else if (type === 'skip') {
+            osc.frequency.setValueAtTime(360, now);
+            gain.gain.setValueAtTime(0.15, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+            osc.start(now);
+            osc.stop(now + 0.15);
+        } else if (type === 'heart') {
+            osc.frequency.setValueAtTime(440, now);
+            osc.frequency.exponentialRampToValueAtTime(880, now + 0.3);
+            gain.gain.setValueAtTime(0.25, now);
+            gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
+            osc.start(now);
+            osc.stop(now + 0.35);
+        }
+    }
+
+    // متغيرات الحالة
+    let playerName = "البطل";
+    let currentLevel = 1;
+    let score = 0;
+    let lives = 3;
+    let skips = 3;
+    let consecutiveCorrect = 0;
+    let currentRoundQuestions = [];
+    let currentQIndex = 0;
+    
+    // أفضل نتيجة مخزنة محلياً
+    let highScore = parseInt(localStorage.getItem('quiz_science_high_score') || '0', 10);
+    
+    // الديفولت بطيء: صعود البالونة خلال 16 ثانية
+    let speedPixelsPerSec = 28;
+    let balloons = [];
+    let animationId = null;
+    let lastTimestamp = 0;
+    let isShowingCorrectBalloon = false;
+
+    // مصفوفة لتسجيل الأخطاء مع شرحها
+    let currentRoundMistakes = [];
+
+    // سجل الأسئلة المطروحة لمنع التكرار
+    const servedQuestionsIndices = { 1: [], 2: [], 3: [] };
+    const balloonColors = ['#0a8f44', '#df5800', '#08803e', '#cc4e00', '#0b63b6'];
+
+    // قراءة أفضل نتيجة عند البداية
+    document.addEventListener("DOMContentLoaded", () => {
+        document.getElementById("high-score-display").innerText = highScore;
+    });
+
+    function selectLevel(lvl) {
+        currentLevel = lvl;
+        document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active'));
+        const btn = document.getElementById(`btn-lvl-${lvl}`);
+        if (btn) btn.classList.add('active');
+        updateLiveLevelButtons();
+    }
+
+    function switchLevelLive(lvl) {
+        currentLevel = lvl;
+        updateLiveLevelButtons();
+        restartGame();
+    }
+
+    function updateLiveLevelButtons() {
+        for (let i = 1; i <= 3; i++) {
+            const btn = document.getElementById(`live-lvl-${i}`);
+            if (btn) {
+                if (i === currentLevel) btn.classList.add('active');
+                else btn.classList.remove('active');
+            }
+        }
+    }
+
+    function toggleTheme() {
+        document.body.classList.toggle("dark-mode");
+    }
+
+    function setSpeed(pxPerSec, btnId) {
+        speedPixelsPerSec = pxPerSec;
+        document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById(btnId).classList.add('active');
+    }
+
+    function initiateGameFlow() {
+        const inputVal = document.getElementById("player-name-input").value.trim();
+        playerName = inputVal ? inputVal : "البطل المتفوق";
+        document.getElementById("player-display").innerText = playerName;
+        document.getElementById("start-modal").style.display = "none";
+
+        const randomAdvice = moralAdvices[Math.floor(Math.random() * moralAdvices.length)];
+        document.getElementById("moral-advice").innerText = randomAdvice;
+        document.getElementById("wait-modal").style.display = "flex";
+
+        setTimeout(() => {
+            document.getElementById("wait-modal").style.display = "none";
+            restartGame();
+        }, 4000);
+    }
+
+    function getUniqueRandomQuestions(level) {
+        const allLevelQ = questionBank[level];
+        let availableIndices = [];
+        for (let i = 0; i < allLevelQ.length; i++) {
+            if (!servedQuestionsIndices[level].includes(i)) {
+                availableIndices.push(i);
+            }
+        }
+
+        if (availableIndices.length < 8) {
+            servedQuestionsIndices[level] = [];
+            availableIndices = allLevelQ.map((_, i) => i);
+        }
+
+        availableIndices.sort(() => 0.5 - Math.random());
+        const chosenIndices = availableIndices.slice(0, 8);
+        servedQuestionsIndices[level].push(...chosenIndices);
+
+        return chosenIndices.map(i => allLevelQ[i]);
+    }
+
+    function restartGame() {
+        score = 0;
+        lives = 3;
+        skips = 3;
+        consecutiveCorrect = 0;
+        currentQIndex = 0;
+        currentRoundMistakes = [];
+        isShowingCorrectBalloon = false;
+        
+        updateHUD();
+        updateLiveLevelButtons();
+        document.getElementById("end-modal").style.display = "none";
+
+        currentRoundQuestions = getUniqueRandomQuestions(currentLevel);
+
+        // تحميل السؤال الأول بعد استقرار DOM
+        setTimeout(() => {
+            loadQuestion();
+            if (animationId) cancelAnimationFrame(animationId);
+            lastTimestamp = performance.now();
+            animationId = requestAnimationFrame(gameLoop);
+        }, 50);
+    }
+
+    function updateHUD() {
+        document.getElementById("score-display").innerText = score;
+        document.getElementById("skips-display").innerText = skips;
+        document.getElementById("high-score-display").innerText = highScore;
+        let heartsStr = "";
+        for (let i = 0; i < lives; i++) heartsStr += "❤️";
+        document.getElementById("lives-display").innerText = heartsStr || "💔";
+        document.getElementById("q-counter").innerText = `السؤال ${currentQIndex + 1} / 8`;
+    }
+
+    function loadQuestion() {
+        if (currentQIndex >= 8 || lives <= 0) {
+            endGame();
+            return;
+        }
+
+        isShowingCorrectBalloon = false;
+        updateHUD();
+        const currentQ = currentRoundQuestions[currentQIndex];
+        document.getElementById("question-text").innerText = currentQ.q;
+
+        const playArea = document.getElementById("play-area");
+        playArea.innerHTML = "";
+        balloons = [];
+
+        // ضبط الأبعاد بأمان مع fallback
+        const areaWidth = playArea.clientWidth || 360;
+        const areaHeight = playArea.clientHeight || 450;
+        const optionsCount = currentQ.options.length;
+
+        // منع التداخل أفقياً بتقسيم المنطقة إلى أعمدة متساوية
+        const slotWidth = areaWidth / optionsCount;
+        const balloonWidth = Math.min(86, slotWidth - 6);
+
+        currentQ.options.forEach((optText, index) => {
+            const b = document.createElement("div");
+            b.className = "balloon";
+            b.style.width = `${balloonWidth}px`;
+            
+            // تصغير الخط للنصوص الطويلة لتجنب خروج النص
+            if (optText.length > 18) {
+                b.classList.add("text-long");
+            }
+            
+            b.innerText = optText;
+            const color = balloonColors[index % balloonColors.length];
+            b.style.background = color;
+
+            // تمركز كل بالونة في خانتها بدقة لمنع التداخل
+            const xPos = (index * slotWidth) + ((slotWidth - balloonWidth) / 2);
+            // توزيع ارتفاع البدء بفارق بسيط جداً
+            const yPos = areaHeight + 10 + (index * 12);
+
+            b.style.left = `${Math.round(xPos)}px`;
+            b.style.top = `${Math.round(yPos)}px`;
+
+            b.onclick = () => handleChoice(index, b);
+            playArea.appendChild(b);
+
+            balloons.push({
+                element: b,
+                x: xPos,
+                y: yPos,
+                speedMultiplier: 0.95 + (index * 0.03),
+                popped: false
+            });
+        });
+    }
+
+    function gameLoop(timestamp) {
+        if (!lastTimestamp) lastTimestamp = timestamp;
+        const delta = Math.min((timestamp - lastTimestamp) / 1000, 0.1); // حماية من قفزات الإطارات
+        lastTimestamp = timestamp;
+
+        if (!isShowingCorrectBalloon) {
+            let allOffScreen = true;
+
+            balloons.forEach(b => {
+                if (!b.popped) {
+                    b.y -= speedPixelsPerSec * b.speedMultiplier * delta;
+                    b.element.style.top = `${b.y}px`;
+                    if (b.y + 130 > 0) {
+                        allOffScreen = false;
+                    }
+                }
+            });
+
+            // عندما تخرج كل البالونات دون إجابة (انتهاء الوقت)
+            if (allOffScreen && balloons.length > 0) {
+                handleMissedQuestion();
+                return;
+            }
+        }
+
+        animationId = requestAnimationFrame(gameLoop);
+    }
+
+    // إظهار البالونة الصحيحة متوهجة في وسط الشاشة عند الخطأ أو انتهاء الوقت
+    function showGlowingCorrectBalloon(onFinish) {
+        isShowingCorrectBalloon = true;
+        const currentQ = currentRoundQuestions[currentQIndex];
+        const correctText = currentQ.options[currentQ.answer];
+        const playArea = document.getElementById("play-area");
+
+        // إخفاء بالونات الخيارات الجارية
+        balloons.forEach(b => {
+            if (b.element) b.element.style.display = "none";
+        });
+
+        // إنشاء بالونة الإجابة الصحيحة المتوهجة
+        const glowB = document.createElement("div");
+        glowB.className = "center-glowing-balloon";
+        glowB.innerHTML = `
+            <span class="center-glowing-balloon-label">الإجابة الصحيحة ✨</span>
+            <span>${correctText}</span>
+        `;
+        playArea.appendChild(glowB);
+
+        setTimeout(() => {
+            glowB.remove();
+            isShowingCorrectBalloon = false;
+            onFinish();
+        }, 1600);
+    }
+
+    function recordMistake(currentQ, studentAnswer = "فاتك الوقت ولم تختر") {
+        currentRoundMistakes.push({
+            question: currentQ.q,
+            correct: currentQ.options[currentQ.answer],
+            student: studentAnswer,
+            explanation: currentQ.exp
+        });
+    }
+
+    function handleChoice(chosenIndex, element) {
+        if (isShowingCorrectBalloon) return;
+
+        const currentQ = currentRoundQuestions[currentQIndex];
+        element.classList.add("balloon-pop");
+
+        if (chosenIndex === currentQ.answer) {
+            playBeep('correct');
+            score += 10;
+            consecutiveCorrect++;
+            if (consecutiveCorrect === 4) {
+                lives++;
+                playBeep('heart');
+                consecutiveCorrect = 0;
+            }
+            updateHUD();
+
+            setTimeout(() => {
+                currentQIndex++;
+                loadQuestion();
+            }, 220);
+        } else {
+            // اختيار خاطئ
+            playBeep('wrong');
+            lives--;
+            consecutiveCorrect = 0;
+            updateHUD();
+            recordMistake(currentQ, currentQ.options[chosenIndex]);
+
+            showGlowingCorrectBalloon(() => {
+                if (lives <= 0) {
+                    endGame();
+                } else {
+                    currentQIndex++;
+                    loadQuestion();
+                }
+            });
+        }
+    }
+
+    function handleMissedQuestion() {
+        const currentQ = currentRoundQuestions[currentQIndex];
+        lives--;
+        consecutiveCorrect = 0;
+        playBeep('wrong');
+        updateHUD();
+        recordMistake(currentQ, "انتهى الوقت وخرجت البالونات ⏱️");
+
+        showGlowingCorrectBalloon(() => {
+            if (lives <= 0) {
+                endGame();
+            } else {
+                currentQIndex++;
+                loadQuestion();
+            }
+        });
+    }
+
+    // تعديل زر التخطي: مسموح به في أي سؤال بما فيه السؤال الثامن
+    function skipQuestion() {
+        if (skips > 0 && currentQIndex < 8 && !isShowingCorrectBalloon) {
+            skips--;
+            playBeep('skip');
+            currentQIndex++;
+            loadQuestion();
+        }
+    }
+
+    function getLevelTitle(lvl) {
+        if (lvl === 1) return "الدرس الأول: القوى الكهربية";
+        if (lvl === 2) return "الدرس الثاني: القوى المغناطيسية";
+        return "الدرس الثالث: قوى الجاذبية";
+    }
+
+    function endGame() {
+        if (animationId) cancelAnimationFrame(animationId);
+
+        // تخزين ومقارنة أفضل نتيجة محلياً
+        if (score > highScore) {
+            highScore = score;
+            localStorage.setItem('quiz_science_high_score', highScore.toString());
+        }
+
+        document.getElementById("end-modal").style.display = "flex";
+        document.getElementById("final-player-name").innerText = playerName;
+        document.getElementById("final-score").innerText = score;
+        document.getElementById("final-high-score").innerText = highScore;
+        document.getElementById("final-level-name").innerText = getLevelTitle(currentLevel);
+
+        const title = document.getElementById("end-title");
+        const phrase = document.getElementById("motivational-phrase");
+        const nextBtn = document.getElementById("btn-next-level");
+
+        if (currentLevel >= 3) {
+            nextBtn.innerText = "ختام المنهج (أعد المستوى 1)";
+        } else {
+            nextBtn.innerText = `الانتقال للمستوى ${currentLevel + 1} ⏭️`;
+        }
+
+        // تقييم النتيجة
+        if (score >= 70) {
+            title.innerText = "عبقري متألق من طراز رفيع! 🏆";
+            phrase.innerText = `ما شاء الله يا ${playerName}! إتقان مذهل للمفاهيم ونيل الدرجات العُلا، أداء يشرف ويدعو للفخر.`;
+        } else if (score >= 50) {
+            title.innerText = "أداء ممتاز وبطل متميز! 🌟";
+            phrase.innerText = `أحسنت صنعاً يا ${playerName}! فهمك للمادة رائع وقوي، وبقليل من التركيز ستكتسح الدرجة النهائية كاملة.`;
+        } else if (score >= 30) {
+            title.innerText = "محاولة طيبة وواعدة! 👍";
+            phrase.innerText = `جهد مبارك يا ${playerName}، كل محاولة تزيدك فهماً وحفظاً، كرر التجربة وستصل للقمة بإذن الله.`;
+        } else {
+            title.innerText = "استمر ولا تيأس! 💪";
+            phrase.innerText = `يا ${playerName}، كبار العلماء تعثروا وتعلموا من أخطائهم! راجع الدرس بتمعن وجرب من جديد وستبهر الجميع.`;
+        }
+
+        // عرض الأخطاء وتفسيرها
+        const mistakesBox = document.getElementById("mistakes-container");
+        const mistakesList = document.getElementById("mistakes-list");
+        mistakesList.innerHTML = "";
+
+        if (currentRoundMistakes.length > 0) {
+            mistakesBox.style.display = "block";
+            currentRoundMistakes.forEach((m, idx) => {
+                const item = document.createElement("div");
+                item.className = "mistake-item";
+                item.innerHTML = `
+                    <div class="mistake-q">س${idx + 1}: ${m.question}</div>
+                    <div class="mistake-ans">✅ الإجابة الصحيحة: ${m.correct}</div>
+                    <div class="mistake-exp">💡 <b>الشرح والحل:</b> ${m.explanation}</div>
+                `;
+                mistakesList.appendChild(item);
+            });
+        } else {
+            mistakesBox.style.display = "block";
+            mistakesList.innerHTML = `<div style="text-align:center; color: var(--accent-green); font-weight: bold; padding: 6px;">تبارك الله! لم ترتكب أي خطأ في هذا الدور 🎯</div>`;
+        }
+    }
+
+    function retryCurrentLevel() {
+        restartGame();
+    }
+
+    function goToNextLevel() {
+        if (currentLevel < 3) {
+            currentLevel++;
+        } else {
+            currentLevel = 1;
+        }
+        selectLevel(currentLevel);
+        restartGame();
+    }
+
+    function shareWhatsApp() {
+        const text = encodeURIComponent(`🎈 حقق البطل (${playerName}) نتيجة ${score}/80 في لعبة العلوم (تحدي ${getLevelTitle(currentLevel)})! ✨\nإشراف وتصميم: أ/ عبد الرحمن عبد الله 📞 01021779644`);
+        window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+    }
+
+    function shareFacebook() {
+        const url = encodeURIComponent(window.location.href);
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${url}`, '_blank');
+    }
+
+    function takeScreenshotAndShare() {
+        const endCard = document.getElementById("end-card-content");
+        if (window.html2canvas) {
+            html2canvas(endCard, { scale: 2 }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `نتيجة_${playerName}_المستوى_${currentLevel}.png`;
+                link.href = canvas.toDataURL("image/png");
+                link.click();
+                alert("تم حفظ لقطة شاشة بطاقتك وأخطائك بنجاح! يمكنك مشاركتها الآن.");
+            });
+        } else {
+            alert("ميزة لقطة الشاشة تتطلب اتصالاً بالإنترنت لتحميل المكتبة.");
+        }
+    }
+</script>
+</body>
+</html>
